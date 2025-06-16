@@ -17,7 +17,7 @@ public class LibraryTextUI {
         System.out.println("a -> browse the books");
         System.out.println("b -> search for a book");
         System.out.println("c -> add a book");
-        System.out.println("d -> remove a book");
+        System.out.println("d -> remove a book by title");
         System.out.println("q -> quit");
         while (true) {
             String input = scanner.nextLine();
@@ -43,11 +43,15 @@ public class LibraryTextUI {
                 Book book = new Book(title, author, publisher, year, summary, isbn);
                 System.out.println(lib.add(isbn, book));
             } else if (input.equals("d")) {
+                System.out.print("Title: ");
+                String title = scanner.nextLine();
+                System.out.println(lib.remove(title));
 
             } else if (input.equals("q")) {
                 break;
             }
         }
+        scanner.close();
     }
 
 

@@ -10,6 +10,8 @@ public class LibraryManager {
     private static final String password = "1234";
 
     private HashMap<String, Book> books; // the key is ISBN
+    // TODO: connect librarydatabase with hashmaps, so that everytime app runs,
+    //       maps get the existing books, authors and publishers from librarydatabase
 
 
     public LibraryManager() {
@@ -47,6 +49,7 @@ public class LibraryManager {
                     st.setString(6, book.getISBN());
                     st.executeUpdate();
                     System.out.println("Book Inserted Successfully!");
+
                 }
             } catch (SQLException e) {
                 System.err.println("Error Inserting a book");
@@ -64,12 +67,27 @@ public class LibraryManager {
         return !(books.containsKey(isbn));
     }
 
+    public boolean remove(String title) {
+        if (books.isEmpty()) {
+            return false;
+        }
+        for (String key: books.keySet()) {
+            if (books.get(key).getTitle().equals(title)) {
+                books.remove(key);
+                return true;
+            }
+        }
+        return false;
+    }
+
     // print all the books
     public void printBooks() {
         if (!(books.isEmpty())) {
             for (String isbn: this.books.keySet()) {
                 System.out.println(this.books.get(isbn));
             }
+        } else {
+            System.out.println("There's no book in Suki's library now.");
         }
     }
 
@@ -104,20 +122,18 @@ public class LibraryManager {
     */
     public int getOrCreateID(Connection con, String name, String table) throws SQLException{
         // name could be an author name or a publisher name
-        String findSql = "SELECT id FROM ? WHERE name = ?;";
+        String findSql = "SELECT id FROM " + table + " WHERE name = ?;";
         try(PreparedStatement findSt = con.prepareStatement(findSql)) {
-            findSt.setString(1, table);
-            findSt.setString(2, name);
+            findSt.setString(1, name);
             ResultSet rs = findSt.executeQuery();
             if (rs.next()) {
                 return rs.getInt("id");
             }
         }
 
-        String createSql = "INSERT INTO ?(name) VALUES (?) RETURNING id;";
+        String createSql = "INSERT INTO " + table + "(name) VALUES (?) RETURNING id;";
         try (PreparedStatement createSt = con.prepareStatement(createSql)) {
-            createSt.setString(1, table);
-            createSt.setString(2, name);
+            createSt.setString(1, name);
             ResultSet rs = createSt.executeQuery();
             if (rs.next()) {
                 return rs.getInt("id");
