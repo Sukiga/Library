@@ -7,7 +7,6 @@ public class LibraryTextUI {
 
     public LibraryTextUI() {
         lib = new LibraryManager();
-        start();
     }
 
     public void start() {
@@ -48,6 +47,7 @@ public class LibraryTextUI {
                 System.out.println(lib.remove(title));
 
             } else if (input.equals("q")) {
+                System.out.println("Bye, See you next time in Suki's Library!");
                 break;
             }
         }

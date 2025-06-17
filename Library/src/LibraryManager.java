@@ -5,6 +5,7 @@ public class LibraryManager {
     // the library manager stores the books that can be borrowed or remove books
     // it also allow searching, sorting and filtering
 
+    private Connection con;
     private static final String url = "jdbc:postgresql://localhost:5432/librarydatabase";
     private static final String username = "sukimak";
     private static final String password = "1234";
@@ -21,7 +22,7 @@ public class LibraryManager {
     public String searchByTitle(String title) {
         if (!(this.books.isEmpty())) {
             for (String key: this.books.keySet()) {
-                if (this.books.get(key).getTitle().equalsIgnoreCase(title)) {
+                if (this.books.get(key).getTitle().contains(title)) {
                     return this.books.get(key).toString();
                 }
             }
@@ -31,26 +32,25 @@ public class LibraryManager {
 
 
     public String add(String isbn, Book book) {
-        if (books.keySet().contains(isbn)) {
+        if (books.containsKey(isbn)) {
             return "The book is already in the library.";
         } else {
             this.books.put(isbn, book);
-            try (Connection con = DriverManager.getConnection(url, username, password)){
+            con = getConnection();
+            try {
+                PreparedStatement sql = con.prepareStatement("INSERT INTO " +
+                        "books(title, author_id, publisher_id, published_year, " +
+                        "summary, isbn) VALUES (?, ?, ?, ?, ?, ?);");
                 int authorId = getOrCreateID(con, book.getAuthor(), "authors");
                 int publisherId = getOrCreateID(con, book.getPublisher(), "publishers");
-                String sql = "INSERT INTO books(title, author_id, publisher_id, " +
-                        "published_year, summary, isbn) VALUES (?, ?, ?, ?, ?, ?);";
-                try (PreparedStatement st = con.prepareStatement(sql)) {
-                    st.setString(1, book.getTitle());
-                    st.setInt(2, authorId);
-                    st.setInt(3, publisherId);
-                    st.setInt(4, book.getYear());
-                    st.setString(5, book.getSummary());
-                    st.setString(6, book.getISBN());
-                    st.executeUpdate();
-                    System.out.println("Book Inserted Successfully!");
-
-                }
+                sql.setString(1, book.getTitle());
+                sql.setInt(2, authorId);
+                sql.setInt(3, publisherId);
+                sql.setInt(4, book.getYear());
+                sql.setString(5, book.getSummary());
+                sql.setString(6, book.getISBN());
+                sql.executeUpdate();
+                System.out.println("Book Inserted Successfully!");
             } catch (SQLException e) {
                 System.err.println("Error Inserting a book");
                 e.printStackTrace();
@@ -92,28 +92,21 @@ public class LibraryManager {
     }
 
     //SQL
-    public void reachDatabase(String sql) {
-        Connection con = null;
+    public Connection getConnection() {
+        try {
+            Class.forName("org.postgresql.Driver");
+        } catch(ClassNotFoundException e) {
+            e.printStackTrace();
+        }
         try {
             con = DriverManager.getConnection(url, username, password);
-            Statement st = con.createStatement();
-            st.execute(sql);
-            System.out.println("Connection Successful!");
+            System.out.println("Database Connected Successfully!");
         } catch(SQLException e) {
-            System.err.println("Connection failed!");
             e.printStackTrace();
-        } finally {
-            if (con != null) {
-                try {
-                    con.close();
-                    System.out.println("Connection closed.");
-                } catch (SQLException e) {
-                    System.err.println("Failed to close connection.");
-                    e.printStackTrace();
-                }
-            }
         }
+        return con;
     }
+
 
     /*
     *
