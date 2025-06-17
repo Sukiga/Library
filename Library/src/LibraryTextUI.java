@@ -42,9 +42,9 @@ public class LibraryTextUI {
                 Book book = new Book(title, author, publisher, year, summary, isbn);
                 System.out.println(lib.add(isbn, book));
             } else if (input.equals("d")) {
-                System.out.print("Title: ");
-                String title = scanner.nextLine();
-                System.out.println(lib.remove(title));
+                System.out.print("ISBN: ");
+                String isbn = scanner.nextLine();
+                System.out.println(lib.removeByISBN(isbn));
 
             } else if (input.equals("q")) {
                 System.out.println("Bye, See you next time in Suki's Library!");

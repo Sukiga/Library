@@ -17,6 +17,7 @@ public class LibraryManager {
 
     public LibraryManager() {
         books = new HashMap<>();
+        loadBooks();
     }
 
     public String searchByTitle(String title) {
@@ -62,12 +63,25 @@ public class LibraryManager {
 
     // if it's false, something is wrong
     // Purpose: remove any book with the same isbn
-    public boolean remove(String isbn, Book book) {
+    public boolean removeByISBN(String isbn) {
+        if (books.isEmpty()) {
+            return false;
+        }
         this.books.remove(isbn);
+        con = getConnection();
+        try {
+            PreparedStatement sql = con.prepareStatement("DELETE from books where isbn=?");
+            sql.setString(1, isbn);
+            sql.executeUpdate();
+            System.out.println("Book Deleted Successfully!");
+        } catch (SQLException e) {
+            System.err.println("Error Deleting a book");
+            e.printStackTrace();
+        }
         return !(books.containsKey(isbn));
     }
 
-    public boolean remove(String title) {
+    public boolean removeByTitle(String title) {
         if (books.isEmpty()) {
             return false;
         }
@@ -91,7 +105,10 @@ public class LibraryManager {
         }
     }
 
-    //SQL
+    /**SQL
+     *
+     *
+     */
     public Connection getConnection() {
         try {
             Class.forName("org.postgresql.Driver");
@@ -107,12 +124,6 @@ public class LibraryManager {
         return con;
     }
 
-
-    /*
-    *
-    *
-    *
-    */
     public int getOrCreateID(Connection con, String name, String table) throws SQLException{
         // name could be an author name or a publisher name
         String findSql = "SELECT id FROM " + table + " WHERE name = ?;";
@@ -136,5 +147,49 @@ public class LibraryManager {
         }
 
     }
+
+    public String getAuthorOrPublisher(int id, String table) {
+        con = getConnection();
+        try {
+            PreparedStatement sql = con.prepareStatement("SELECT name FROM " + table +
+                    " WHERE id=?;");
+            sql.setInt(1, id);
+            ResultSet res = sql.executeQuery();
+            String name = "";
+            while (res.next()) {
+                name = res.getString("name");
+            }
+            return name;
+        } catch(Exception e) {
+            e.printStackTrace();
+        }
+        return " ";
+    }
+
+    public void loadBooks() {
+        con = getConnection();
+        try {
+            Statement sql = con.createStatement();
+            ResultSet res = sql.executeQuery("SELECT * FROM books;");
+            while (res.next()) {
+                String title = res.getString("title");
+                String author = getAuthorOrPublisher(res.getInt("author_id"), "authors");
+                String publisher = getAuthorOrPublisher(res.getInt("publisher_id"), "publishers");
+                int publishedYear = res.getInt("published_year");
+                String summary = res.getString("summary");
+                String isbn = res.getString("isbn");
+                Book book = new Book(title, author, publisher, publishedYear, summary, isbn);
+                books.put(isbn, book);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    /*
+     *
+     *
+     *
+     */
 
 }
